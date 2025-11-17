@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:gas_app_project_dev/services/auth.dart';
 import 'package:gas_app_project_dev/services/gas_station_services.dart';
 import 'package:gas_app_project_dev/services/gas_filter_tab.dart';
 import 'package:gas_app_project_dev/services/location_service.dart';
@@ -29,6 +31,10 @@ class _SearchScreenState extends State<SearchScreen> {
 
   String _searchQuery = '';
 
+  String role = 'user';
+
+  bool _loadingRole = true;
+
    Map<String,dynamic> _filters = {
               'maxDistance': 25.0,
               'sort': 'distance_asc',
@@ -38,6 +44,7 @@ class _SearchScreenState extends State<SearchScreen> {
   void initState() {
     super.initState();
     getUserLocation();
+    getUserRole();
   }
 
    void getUserLocation() async {
@@ -54,6 +61,36 @@ class _SearchScreenState extends State<SearchScreen> {
     }
    }
 
+   void getUserRole() async {
+         final User? user = Auth().currentUser;
+
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(user?.uid).get();
+
+        setState(() {
+          role = userDoc.data()?['role'] ?? 'user';
+          _loadingRole = false;
+        });
+   }
+
+   Future<void> addContribution({
+    required String address,
+    required double price,
+   }) async {
+    try {
+      final User? user = Auth().currentUser;
+
+      if(user == null) return;
+
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).collection('contributions').add({
+        'address': address,
+        'price': price,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Contribution failed to save');
+    }
+   }
+
   void openPriceBox({String? placeId, String? currentStation, double? currentPrice}) {
   // Pre-fill controllers when updating
   if (placeId != null) {
@@ -67,7 +104,7 @@ class _SearchScreenState extends State<SearchScreen> {
   showDialog(
     context: context,
     builder: (context) => AlertDialog(
-      title: Text(placeId == null ? "Add Gas Price" : "Update Gas Price"),
+      title: Text("Update Gas Price"),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -75,15 +112,13 @@ class _SearchScreenState extends State<SearchScreen> {
           if (placeId == null)
             TextField(
               controller: stationController,
-              decoration: const InputDecoration(labelText: "Station Name"),
+              decoration: const InputDecoration(labelText: "Station Address"),
             ),
           TextField(
             controller: doubleController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
-              hintText: placeId == null
-              ? "Enter Price, e.g., 4.29"
-              : "Update Price, e.g., 4.29",
+              hintText: "Enter Price, e.g., 4.29"
               ),
           ),
         ],
@@ -93,38 +128,21 @@ class _SearchScreenState extends State<SearchScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-        ElevatedButton(
-            onPressed: () async {
-              final stations = await firestoreService.fetchStations(_userPosition!.latitude, _userPosition!.longitude); // Denver
-              for(var station in stations){
-                await firestoreService.addStationFromAPI(station);
-              }
-              print("Fetched ${stations.length} stations!");
-            },
-            child: const Text("Load Nearby Stations"),
-          ),
           const SizedBox(height: 8),
         ElevatedButton(
-          onPressed: () {
-            final input = doubleController.text.trim();
-            final price = double.tryParse(input);
+          onPressed: () async {
+            final address = stationController.text.trim();
+            final price = double.tryParse(doubleController.text.trim()) ?? 0.0;
 
-            if (price != null) {
-              final roundedPrice = double.parse(price.toStringAsFixed(2));
 
                 // Update existing station
-                firestoreService.updatePrice(placeId!, roundedPrice);
+                await addContribution(address: address, price: price);
 
               stationController.clear();
               doubleController.clear();
-              Navigator.of(context).pop(); // close dialog
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Please enter a valid number')),
-              );
-            }
+              Navigator.of(context).pop(); 
           },
-          child: Text(placeId == null ? "Add" : "Update"),
+          child: Text("Update"),
         ),
           ],
         ),
@@ -164,10 +182,11 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ],
         ),
-        floatingActionButton: FloatingActionButton(
+        floatingActionButton: !_loadingRole && role == 'contributor' 
+        ? FloatingActionButton(
           onPressed: openPriceBox,
           child: const Icon(Icons.add), 
-          ),
+          ) : null,
           body: Column(
             children: [
               Container(

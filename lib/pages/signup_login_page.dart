@@ -13,6 +13,7 @@ class LoginPage extends StatefulWidget{
 }
 
 class _LoginPage extends State<LoginPage> {
+  final CollectionReference gasstation = FirebaseFirestore.instance.collection("users");
   String? errorMessage = '';
   bool isLogin = true;
 
@@ -69,10 +70,16 @@ class _LoginPage extends State<LoginPage> {
     }
 
     try {
-      await Auth().createUserWithEmailPassword(
+      UserCredential userCredential=  await Auth().createUserWithEmailPassword(
         email: email,
         password: password,
       ); 
+
+      String uid = userCredential.user!.uid;
+
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
+        'role': 'user',
+      });
 
       _controllerEmail.clear();
       _controllerPassword.clear();

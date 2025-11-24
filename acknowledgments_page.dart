@@ -11,25 +11,30 @@ class AcknowledgmentsPage extends StatelessWidget {
       ),
       body: const Padding(
         padding: EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Acknowledgments',
-                style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 12),
-              Text(
-                'We would like to thank all everyone who made this app possible.',
-                style: TextStyle(fontSize: 16),
-              ),
-              SizedBox(height: 20),
-              Text(
-                'Add text here',
-                style: TextStyle(fontSize: 16, height: 1.5),
-              ),
-            ],
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Acknowledgments',
+              style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 12),
+            Text(
+              'We would like to thank all everyone who made this app possible.',
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 20),
+            Text(
+              "Thank you to Daniel Donze and LSU for providing the class"
+                  "\nCardin Tran "
+                  "\nJimmy Rubio "
+                  "\nHoa Ho "
+                  "\nEmari Landry "
+                  "\nMatthew Duffy",
+              style: TextStyle(fontSize: 16, height: 1.5),
+            ),
+          ],
+        ),
 
       ),
     );

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'acknowledgments_page.dart';
 import 'feedback_page.dart';
-
+import 'contributor.dart';
 
 
 class SettingsPage extends StatefulWidget {
@@ -35,38 +35,38 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 8),
           SwitchListTile(
-            title: const Text('Dark Mode'),
-            secondary: const Icon(Icons.dark_mode),
-            value: darkMode,
-            onChanged: (value) {setState(() => darkMode = value);
+              title: const Text('Dark Mode'),
+              secondary: const Icon(Icons.dark_mode),
+              value: darkMode,
+              onChanged: (value) {setState(() => darkMode = value);
               }
           ),
           const SizedBox(height: 8),
           Text('Text Size'),
           DropdownButton<String>(
-            value: textSize,
-            isExpanded: true,
-            items: ['Small', 'Medium', 'Large']
-                .map((size) => DropdownMenuItem(value: size, child: Text(size),))
-                .toList(),
-            onChanged: (value) {
-              if (value != null) {setState(() => textSize = value);
+              value: textSize,
+              isExpanded: true,
+              items: ['Small', 'Medium', 'Large']
+                  .map((size) => DropdownMenuItem(value: size, child: Text(size),))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {setState(() => textSize = value);
+                }
               }
-            }
           ),
 
           const SizedBox(height: 8),
           Text('Language'),
           DropdownButton<String>(
-            value: language,
-            isExpanded: true,
-            items: ['English', 'Spanish', 'French']
-                .map((lang) => DropdownMenuItem(value: lang, child: Text(lang),))
-                .toList(),
-            onChanged: (value) {
-              if (value != null) {setState(() => language = value);
+              value: language,
+              isExpanded: true,
+              items: ['English', 'Spanish', 'French']
+                  .map((lang) => DropdownMenuItem(value: lang, child: Text(lang),))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {setState(() => language = value);
+                }
               }
-            }
           ),
 
           const SizedBox(height: 24),
@@ -78,40 +78,51 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           const SizedBox(height: 8),
           SwitchListTile(
-            title: const Text('Enable Notifications'),
-            secondary: const Icon(Icons.notifications),
-            value: notifications,
-            onChanged: (value) {setState(() => notifications = value);
-            }
+              title: const Text('Enable Notifications'),
+              secondary: const Icon(Icons.notifications),
+              value: notifications,
+              onChanged: (value) {setState(() => notifications = value);
+              }
           ),
           const SizedBox(height: 24),
           const Divider(),
 
           Text(
             'Support/About',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
 
           // Feedback/Acknowledgments
           ListTile(
-            title: const Text('Feedback'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              Navigator.push(
+              title: const Text('Feedback'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const FeedbackPage()),);
-            }
+              }
           ),
           ListTile(
-            title: const Text('Acknowledgments'),
-            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-            onTap: () {
-              Navigator.push(
+              title: const Text('Acknowledgments'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const AcknowledgmentsPage()),);
 
-            }
+              }
           ),
+          ListTile(
+              title: const Text('Become A Contributor'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ContributorPage()),);
+
+              }
+          ),
+
         ],
       ),
     );

@@ -81,15 +81,50 @@ class _MapScreenState extends State<MapScreen> {
     return Marker(
       markerId: MarkerId(station.id),
       position: LatLng(station.latitude, station.longitude),
-      infoWindow: InfoWindow(
-        title: station.name,
-        snippet: '\$${station.price.toStringAsFixed(2)}',
-      ),
+        onTap: () {
+          _showStationPopup(station);
+        },
       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
     );
   }).toSet();
 
   if (mounted) setState(() {});
+}
+
+  void _showStationPopup(GasStation station) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text(station.name),
+        content: SizedBox(
+          height: 100,
+        child:Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(station.address),
+            const SizedBox(height: 10),
+            Text(
+              "Price: \$${station.price.toStringAsFixed(2)}",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              "Deals: "
+            ),
+          ],
+        ),
+      ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      );
+    },
+  );
 }
 
   void _onMapCreated(GoogleMapController controller) {

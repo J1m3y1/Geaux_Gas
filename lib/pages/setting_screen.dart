@@ -4,6 +4,7 @@ import 'package:gas_app_project_dev/pages/feedback_page.dart';
 import 'package:gas_app_project_dev/pages/signup_login_page.dart';
 import 'package:gas_app_project_dev/services/auth.dart';
 import 'package:gas_app_project_dev/services/globals.dart';
+import 'package:gas_app_project_dev/pages/contributor_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({ super.key});
@@ -45,20 +46,6 @@ class _SettingsPageState extends State<SettingsPage> {
           );
             },
           ),
-          const SizedBox(height: 8),
-          Text('Text Size'),
-          DropdownButton<String>(
-            value: textSize,
-            isExpanded: true,
-            items: ['Small', 'Medium', 'Large']
-                .map((size) => DropdownMenuItem(value: size, child: Text(size)))
-                .toList(),
-            onChanged: (value) {
-              if (value != null) setState(() => textSize = value);
-            }
-          ),
-
-
           const SizedBox(height: 24),
 
           Text(
@@ -66,9 +53,19 @@ class _SettingsPageState extends State<SettingsPage> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
 
-          // Feedback/Acknowledgments
           ListTile(
-            title: const Text('Apply To contribute'),
+              title: const Text('Become A Contributor'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ContributorPage()),
+                  );
+              }
+          ),
+
+          ListTile(
+            title: const Text('Feedback'),
             trailing: const Icon(Icons.arrow_forward_ios, size: 16),
             onTap: () {
               Navigator.push(

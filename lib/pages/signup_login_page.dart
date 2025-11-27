@@ -85,6 +85,14 @@ class _LoginPage extends State<LoginPage> {
       _controllerPassword.clear();
       _controllerRePassword.clear();
 
+      setState(() {
+        isLogin = true;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Account created, Login."))
+      );
+
     } on FirebaseAuthException catch(e) {
       setState(() {
         errorMessage = e.message;

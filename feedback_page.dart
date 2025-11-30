@@ -1,7 +1,21 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class FeedbackPage extends StatelessWidget {
+class FeedbackPage extends StatefulWidget {
   const FeedbackPage({super.key});
+
+  @override
+  State<FeedbackPage> createState() => _FeedbackPageState();
+}
+
+class _FeedbackPageState extends State<FeedbackPage> {
+  final TextEditingController feedbackController = TextEditingController();
+
+  void saveFeedback() async {
+    await FirebaseFirestore.instance.collection('feedback').add({
+      'feedback': feedbackController.text,
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +35,7 @@ class FeedbackPage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             TextField(
+              controller: feedbackController,
               decoration: InputDecoration(
                 hintText: 'Enter your feedback here',
                 border: OutlineInputBorder(),
@@ -30,6 +45,7 @@ class FeedbackPage extends StatelessWidget {
             const SizedBox(height: 12),
             ElevatedButton.icon(
               onPressed: () {
+                saveFeedback();
                 Navigator.pop(context);
               },
               icon: const Icon(Icons.send_outlined),

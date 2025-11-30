@@ -26,6 +26,7 @@ class AcknowledgmentsPage extends StatelessWidget {
             SizedBox(height: 20),
             Text(
               "Thank you to Daniel Donze and LSU for providing the class"
+                  "\n\nThank you to everyone who contributed to the project"
                   "\nCardin Tran "
                   "\nJimmy Rubio "
                   "\nHoa Ho "

@@ -69,7 +69,7 @@ class _ContributorPageState extends State<ContributorPage> {
               controller: reasonController,
               maxLines: 10,
               decoration: InputDecoration(
-                hintText: 'Reason to become a contributor',
+                hintText: 'Reason to become a contributor.dart',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),

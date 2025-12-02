@@ -10,7 +10,18 @@ import 'package:gas_app_project_dev/services/location_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+const lightBackground = Color(0xFFF3FFF7);
+const lightCard = Color(0xFFE6FFF0);
+const lightBorder = Color(0xFFB7F5D4);
+const lightText = Color(0xFF2F855A);
+const lightAccent = Color(0xFF68D391);
 
+const darkBackground = Color(0xFF121212);
+const darkCard = Color(0xFF1E1E1E);
+const darkBorder = Color(0xFF2A2A2A);
+const darkTextPrimary = Color(0xFFE0E0E0);
+const darkTextSecondary = Color(0xFFA0A0A0);
+const darkAccent = Color(0xFF34D399);
 
 class SearchScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -21,7 +32,6 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-
   final GasStationServices firestoreService = GasStationServices();
 
   final TextEditingController doubleController = TextEditingController();
@@ -40,12 +50,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
   List<Map<String, dynamic>> nearbyStations = [];
 
+  Map<String, dynamic> _filters = {'maxDistance': 25.0, 'sort': 'distance_asc'};
 
-   Map<String,dynamic> _filters = {
-              'maxDistance': 25.0,
-              'sort': 'distance_asc',
-   };
-  
   @override
   void initState() {
     super.initState();
@@ -53,8 +59,8 @@ class _SearchScreenState extends State<SearchScreen> {
     getUserRole();
   }
 
-   void getUserLocation() async {
-    try{
+  void getUserLocation() async {
+    try {
       final locationSerive = LocationService();
       final pos = await locationSerive.getCurrentLocation();
 
@@ -62,154 +68,252 @@ class _SearchScreenState extends State<SearchScreen> {
         _userPosition = pos;
         print('User Location Found');
       });
-    } catch(e) {
+    } catch (e) {
       print('Error getting location $e');
     }
-   }
+  }
 
-   void getUserRole() async {
-         final User? user = Auth().currentUser;
+  void getUserRole() async {
+    final User? user = Auth().currentUser;
 
-        final userDoc = await FirebaseFirestore.instance.collection('users').doc(user?.uid).get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user?.uid)
+        .get();
 
-        setState(() {
-          role = userDoc.data()?['role'] ?? 'user';
-          _loadingRole = false;
-        });
-   }
+    setState(() {
+      role = userDoc.data()?['role'] ?? 'user';
+      _loadingRole = false;
+    });
+  }
 
-   Future<void> addContribution({
+  Future<void> addContribution({
     required String address,
     required double price,
-   }) async {
+  }) async {
     try {
       final User? user = Auth().currentUser;
 
-      if(user == null) return;
+      if (user == null) return;
 
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).collection('contributions').add({
-        'address': address,
-        'price': price,
-        'timestamp': FieldValue.serverTimestamp(),
-        'lat': _userPosition!.latitude,
-        'long': _userPosition!.longitude,
-      });
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('contributions')
+          .add({
+            'address': address,
+            'price': price,
+            'timestamp': FieldValue.serverTimestamp(),
+            'lat': _userPosition!.latitude,
+            'long': _userPosition!.longitude,
+          });
     } catch (e) {
       print('Contribution failed to save');
     }
-   }
-
-  void openPriceBox({String? placeId, String? currentStation, double? currentPrice}) {
-  // Pre-fill controllers when updating
-  selectedStation = null;
-  if (placeId != null) {
-    stationController.text = currentStation ?? "";
-    doubleController.text = currentPrice?.toString() ?? "";
-  } else {
-    stationController.clear();
-    doubleController.clear();
   }
 
-  showDialog(
-  context: context,
-  builder: (context) => AlertDialog(
-    title: const Text("Update Gas Price"),
-    content: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Only allow editing station name when adding
-        if (placeId == null)
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 300), // limit width inside dialog
-            child: DropdownButtonFormField<GasStation>(
-              isExpanded: true, // ensures the dropdown fills available width
-              decoration: const InputDecoration(
-                labelText: "Select Gas Station",
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              value: selectedStation,
-              items: nearbyStations.map((entry) {
-                final station = entry['station'] as GasStation;
-                return DropdownMenuItem<GasStation>(
-                  value: station,
-                  child: Text(
-                    station.address,
-                    overflow: TextOverflow.ellipsis, // truncate long addresses
-                    maxLines: 1,
-                  ),
-                );
-              }).toList(),
-              onChanged: (station) {
-                setState(() {
-                  selectedStation = station;
-                });
-              },
-            ),
-          ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: doubleController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
-            hintText: "Enter Price, e.g., 4.29",
+  void openPriceBox({
+    String? placeId,
+    String? currentStation,
+    double? currentPrice,
+  }) {
+    // Pre-fill controllers when updating
+    final isDark = widget.isDarkMode;
+    selectedStation = null;
+    if (placeId != null) {
+      stationController.text = currentStation ?? "";
+      doubleController.text = currentPrice?.toString() ?? "";
+    } else {
+      stationController.clear();
+      doubleController.clear();
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDark ? darkCard : lightCard,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: isDark ? darkBorder : lightBorder, width: 2),
+        ),
+
+        title: Text(
+          "Update Gas Price",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: isDark ? darkTextPrimary : lightText,
           ),
         ),
-      ],
-    ),
-    actions: [
-      Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox(height: 8),
-          ElevatedButton(
-            onPressed: () async {
-              final address = placeId != null
-                  ? stationController.text
-                  : selectedStation?.address;
-              if (address == null) return;
-              final price = double.tryParse(doubleController.text.trim()) ?? 0.0;
 
-              await addContribution(address: address, price: price);
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (placeId == null)
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark ? darkBackground : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isDark ? darkBorder : lightBorder,
+                    width: 1.5,
+                  ),
+                ),
+                child: DropdownButtonFormField<GasStation>(
+                  isExpanded: true,
+                  value: selectedStation,
 
-              selectedStation = null;
-              doubleController.clear();
-              Navigator.of(context).pop();
-            },
-            child: const Text("Update"),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: isDark ? darkBackground : Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 14,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: isDark ? darkBorder : lightBorder,
+                        width: 1.5,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: isDark ? darkAccent : lightAccent,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  hint: Text(
+                    "Select Gas Station",
+                    style: TextStyle(
+                      color: isDark ? darkTextSecondary : Colors.grey[600],
+                    ),
+                  ),
+                  items: nearbyStations.map((entry) {
+                    final station = entry['station'] as GasStation;
+                    return DropdownMenuItem<GasStation>(
+                      value: station,
+                      child: Text(
+                        station.address,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
+                  }).toList(),
+                  onChanged: (station) {
+                    setState(() {
+                      selectedStation = station;
+                    });
+                  },
+                ),
+              ),
+
+            const SizedBox(height: 16),
+            TextField(
+              controller: doubleController,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: InputDecoration(
+                hintText: "Enter Price, e.g., 4.29",
+                filled: true,
+                fillColor: isDark ? darkBackground : Colors.white,
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: isDark ? darkBorder : lightBorder,
+                    width: 1.5,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: isDark ? darkAccent : lightAccent,
+                    width: 2,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () async {
+                final address = placeId != null
+                    ? stationController.text
+                    : selectedStation?.address;
+                if (address == null) return;
+                final price =
+                    double.tryParse(doubleController.text.trim()) ?? 0.0;
+
+                await addContribution(address: address, price: price);
+
+                doubleController.clear();
+                selectedStation = null;
+
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDark ? darkAccent : lightAccent,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text("Update"),
+            ),
           ),
         ],
       ),
-    ],
-  ),
-);
-
-}
-
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = widget.isDarkMode;
     return Scaffold(
-      appBar: AppBar(title: Text("Gas Prices"),
+      backgroundColor: isDark ? darkBackground : lightBackground,
+      appBar: AppBar(
+        backgroundColor: widget.isDarkMode ? darkCard : lightCard,
+        elevation: 0,
+        title: Text(
+          "Gas Prices",
+          style: TextStyle(
+            color: widget.isDarkMode ? darkTextPrimary : lightText,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        iconTheme: IconThemeData(
+          color: widget.isDarkMode ? darkTextPrimary : lightText,
+        ),
         actions: [
           IconButton(
             icon: SvgPicture.asset(
               'assets/icons/filter-svgrepo-com.svg',
               width: 24,
-              height: 24
+              height: 24,
+              colorFilter: ColorFilter.mode(
+                widget.isDarkMode ? darkTextPrimary : lightText,
+                BlendMode.srcIn,
+              ),
             ),
-            onPressed: () async{
-              final result = await showModalBottomSheet<Map<String,dynamic>>(
+            onPressed: () async {
+              final result = await showModalBottomSheet<Map<String, dynamic>>(
                 context: context,
                 builder: (_) => FilterSheet(
                   currentFilters: _filters,
                   onApply: (newFilters) {
-                  Navigator.of(context).pop(newFilters);
-                },),
+                    Navigator.of(context).pop(newFilters);
+                  },
+                ),
               );
 
-              if(result != null){
+              if (result != null) {
                 setState(() {
                   _filters = result;
                 });
@@ -217,183 +321,295 @@ class _SearchScreenState extends State<SearchScreen> {
             },
           ),
         ],
-        ),
-        floatingActionButton: !_loadingRole && role == 'contributor' 
-        ? FloatingActionButton(
-          onPressed: openPriceBox,
-          child: const Icon(Icons.add), 
-          ) : null,
-          body: Column(
-            children: [
-              Container(
-                margin: EdgeInsets.only(top: 40, left: 20, right: 20),
-                decoration: BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(
-                      // ignore: deprecated_member_use
-                      color: Color(0xff1D1617).withOpacity(0.11),
-                      blurRadius: 40,
-                      spreadRadius: 0.0
-                    ),
-                  ],
-                ),
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: "Search",
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: widget.isDarkMode ? const Color(0xFF1E1E1E) : const Color(0xFFF7F7F7),
-                  contentPadding: EdgeInsets.all(15),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: BorderSide.none
+      ),
+      floatingActionButton: !_loadingRole && role == 'contributor'
+          ? FloatingActionButton(
+              onPressed: openPriceBox,
+              backgroundColor: isDark ? darkAccent : lightAccent,
+              child: const Icon(Icons.add),
+            )
+          : null,
+      body: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 16, left: 20, right: 20),
+            child: TextField(
+              decoration: InputDecoration(
+                hintText: "Search",
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: isDark ? darkBackground : lightBackground,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                    color: isDark ? darkBorder : lightBorder,
+                    width: 2,
                   ),
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _searchQuery = value.trim().toLowerCase();
-                    });
-                  },
                 ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(15),
+                  borderSide: BorderSide(
+                    color: isDark ? darkAccent : lightAccent,
+                    width: 2,
+                  ),
+                ),
+
+                contentPadding: const EdgeInsets.all(16),
               ),
-              
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.trim().toLowerCase();
+                });
+              },
+            ),
+          ),
+
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-            stream: firestoreService.getGasInfo(),
-            key: ValueKey(_filters),
-            builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              final stationList = snapshot.data!.docs;
-              final filter = StationFilter();
-              
-              final filteredStations = stationList.where((doc) {
-                if(_userPosition == null) return false;
-                final data = doc.data() as Map<String, dynamic>;
-                final name = (data['name'] ?? '').toString().toLowerCase();
-                final addy = (data['address']?? '').toString().toLowerCase();
-                final distance = filter.calculateDistance(_userPosition!.latitude, _userPosition!.longitude, data['latitude'], data['longitude']) * 0.621371;
-                final matchesSearch = _searchQuery.isEmpty || name.contains(_searchQuery) || addy.contains(_searchQuery);
-                final withinDistance = distance <= _filters['maxDistance'];
+              stream: firestoreService.getGasInfo(),
+              key: ValueKey(_filters),
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  final stationList = snapshot.data!.docs;
+                  final filter = StationFilter();
 
-                return withinDistance & matchesSearch;
-            }).toList();
+                  final filteredStations = stationList.where((doc) {
+                    if (_userPosition == null) return false;
+                    final data = doc.data() as Map<String, dynamic>;
+                    final name = (data['name'] ?? '').toString().toLowerCase();
+                    final addy = (data['address'] ?? '')
+                        .toString()
+                        .toLowerCase();
+                    final distance =
+                        filter.calculateDistance(
+                          _userPosition!.latitude,
+                          _userPosition!.longitude,
+                          data['latitude'],
+                          data['longitude'],
+                        ) *
+                        0.621371;
+                    final matchesSearch =
+                        _searchQuery.isEmpty ||
+                        name.contains(_searchQuery) ||
+                        addy.contains(_searchQuery);
+                    final withinDistance = distance <= _filters['maxDistance'];
 
-            if(_filters['sort'] == 'price_asc') {
-              filteredStations.sort((a , b) {
-                final dataA = a.data() as Map<String,dynamic>;
-                final dataB = b.data() as Map<String,dynamic>;
-                final pa = (dataA['price'] as num?)?.toDouble() ?? 0.0;
-                final pb = (dataB['price'] as num?)?.toDouble() ?? 0.0;
-                return pa.compareTo(pb);
-              });
-            } else if(_filters['sort'] == 'price_desc'){
-              filteredStations.sort((a , b) {
-                final dataA = a.data() as Map<String,dynamic>;
-                final dataB = b.data() as Map<String,dynamic>;
-                final pa = (dataA['price'] as num?)?.toDouble() ?? 0.0;
-                final pb = (dataB['price'] as num?)?.toDouble() ?? 0.0;
-                return pb.compareTo(pa);
-              });
-            } else if(_filters['sort'] == 'distance_desc'){
-              filteredStations.sort((a, b) {
-                final dataA = a.data() as Map<String,dynamic>;
-                final dataB = b.data() as Map<String,dynamic>;
-                final da = filter.calculateDistance(_userPosition!.latitude, _userPosition!.longitude, dataA['latitude'], dataA['longitude']);
-                final db = filter.calculateDistance(_userPosition!.latitude, _userPosition!.longitude, dataB['latitude'], dataB['longitude']);
-                return db.compareTo(da);
-              });
-            } else {
-              filteredStations.sort((a, b) {
-                final dataA = a.data() as Map<String,dynamic>;
-                final dataB = b.data() as Map<String,dynamic>;
-                final da = filter.calculateDistance(_userPosition!.latitude, _userPosition!.longitude, dataA['latitude'], dataA['longitude']);
-                final db = filter.calculateDistance(_userPosition!.latitude, _userPosition!.longitude, dataB['latitude'], dataB['longitude']);
-                return da.compareTo(db);
-              });
-            }
+                    return withinDistance & matchesSearch;
+                  }).toList();
 
-            nearbyStations = filteredStations.map((doc) {
-            final data = doc.data() as Map<String, dynamic>;
-            final station = GasStation.fromFirestore(data, doc.id);
-            return {
-              'station': station,
-              };
-            }).toList();
-
-
-            // Display list
-            return ListView.builder(
-              itemCount: filteredStations.length,
-              itemBuilder: (context, index) {
-              final document = filteredStations[index];
-              final data = document.data() as Map<String, dynamic>; // fixed syntax
-              final stationText = data['name'] ?? 'Unknown Station';
-              final address = data['address'] ?? 'Unknown Address';
-              final price = (data['price'] as num?)?.toDouble() ?? 0.0;
-              final distance = filter.calculateDistance(_userPosition!.latitude, _userPosition!.longitude, data['latitude'], data['longitude']) * 0.621371;
-              
-
-            return ListTile(
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                Text(stationText, overflow: TextOverflow.ellipsis,),
-                Text('\$${price.toStringAsFixed(2)}', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-              ]),
-              subtitle: Row( 
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Text(address, overflow: TextOverflow.ellipsis,),
-                Text('${distance.toStringAsFixed(2)} mi'),
-                  ],
-                ),
-                  ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Text('Per Gallon'),
-                ElevatedButton(
-                  onPressed: () async{
-                    final address = data['address'] ?? '';
-                    final encodedAddress = Uri.encodeComponent(address);
-                    final googleMapsUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=$encodedAddress");
-                  
-                    if(!await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication)){
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Could not open maps"),)
+                  if (_filters['sort'] == 'price_asc') {
+                    filteredStations.sort((a, b) {
+                      final dataA = a.data() as Map<String, dynamic>;
+                      final dataB = b.data() as Map<String, dynamic>;
+                      final pa = (dataA['price'] as num?)?.toDouble() ?? 0.0;
+                      final pb = (dataB['price'] as num?)?.toDouble() ?? 0.0;
+                      return pa.compareTo(pb);
+                    });
+                  } else if (_filters['sort'] == 'price_desc') {
+                    filteredStations.sort((a, b) {
+                      final dataA = a.data() as Map<String, dynamic>;
+                      final dataB = b.data() as Map<String, dynamic>;
+                      final pa = (dataA['price'] as num?)?.toDouble() ?? 0.0;
+                      final pb = (dataB['price'] as num?)?.toDouble() ?? 0.0;
+                      return pb.compareTo(pa);
+                    });
+                  } else if (_filters['sort'] == 'distance_desc') {
+                    filteredStations.sort((a, b) {
+                      final dataA = a.data() as Map<String, dynamic>;
+                      final dataB = b.data() as Map<String, dynamic>;
+                      final da = filter.calculateDistance(
+                        _userPosition!.latitude,
+                        _userPosition!.longitude,
+                        dataA['latitude'],
+                        dataA['longitude'],
                       );
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.blue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    )
-                  ), 
-                  child: const Text('Go'),
-                ),
-                  ],
-                ),
-            ]),
-            );
-          },
-            );
-      } else if (snapshot.hasError) {
-        return Center(child: Text('Error: ${snapshot.error}'));
-      } else {
-        return const Center(child: CircularProgressIndicator());
-      }
-    },
-  ),
-        ),
-          ],
-        ),
+                      final db = filter.calculateDistance(
+                        _userPosition!.latitude,
+                        _userPosition!.longitude,
+                        dataB['latitude'],
+                        dataB['longitude'],
+                      );
+                      return db.compareTo(da);
+                    });
+                  } else {
+                    filteredStations.sort((a, b) {
+                      final dataA = a.data() as Map<String, dynamic>;
+                      final dataB = b.data() as Map<String, dynamic>;
+                      final da = filter.calculateDistance(
+                        _userPosition!.latitude,
+                        _userPosition!.longitude,
+                        dataA['latitude'],
+                        dataA['longitude'],
+                      );
+                      final db = filter.calculateDistance(
+                        _userPosition!.latitude,
+                        _userPosition!.longitude,
+                        dataB['latitude'],
+                        dataB['longitude'],
+                      );
+                      return da.compareTo(db);
+                    });
+                  }
+
+                  nearbyStations = filteredStations.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final station = GasStation.fromFirestore(data, doc.id);
+                    return {'station': station};
+                  }).toList();
+
+                  // Display list
+                  return ListView.builder(
+                    itemCount: filteredStations.length,
+                    itemBuilder: (context, index) {
+                      final document = filteredStations[index];
+                      final data =
+                          document.data()
+                              as Map<String, dynamic>; // fixed syntax
+                      final stationText = data['name'] ?? 'Unknown Station';
+                      final address = data['address'] ?? 'Unknown Address';
+                      final price = (data['price'] as num?)?.toDouble() ?? 0.0;
+                      final distance =
+                          filter.calculateDistance(
+                            _userPosition!.latitude,
+                            _userPosition!.longitude,
+                            data['latitude'],
+                            data['longitude'],
+                          ) *
+                          0.621371;
+
+                      return Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark ? darkCard : lightCard,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark ? darkBorder : lightBorder,
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    stationText,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark
+                                          ? darkTextPrimary
+                                          : lightText,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Text(
+                                  '\$${price.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark
+                                        ? darkTextPrimary
+                                        : Colors.black,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 6),
+                            Text(
+                              address,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDark
+                                    ? darkTextSecondary
+                                    : Colors.black87,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              '${distance.toStringAsFixed(2)} mi',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDark
+                                    ? darkTextSecondary
+                                    : Colors.black54,
+                              ),
+                            ),
+
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: () async {
+                                    final encodedAddress = Uri.encodeComponent(
+                                      address,
+                                    );
+                                    final googleMapsUrl = Uri.parse(
+                                      "https://www.google.com/maps/search/?api=1&query=$encodedAddress",
+                                    );
+
+                                    if (!await launchUrl(
+                                      googleMapsUrl,
+                                      mode: LaunchMode.externalApplication,
+                                    )) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text("Could not open maps"),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isDark
+                                        ? darkAccent
+                                        : lightAccent,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 8,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  child: const Text("Go"),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else {
+                  return const Center(child: CircularProgressIndicator());
+                }
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -19,6 +19,7 @@ class GasStationServices {
       'longitude': station['geometry']['location']['lng'],
       'price': 0.0, // initial price
       'timestamp': Timestamp.now(), 
+      'deals': '',
   }, SetOptions(merge: true));
     }
   

@@ -25,12 +25,13 @@ class AcknowledgmentsPage extends StatelessWidget {
             ),
             SizedBox(height: 20),
             Text(
-              "Thank you to Daniel Donze and LSU for providing the class"
-                  "\nCardin Tran "
-                  "\nJimmy Rubio "
-                  "\nHoa Ho "
-                  "\nEmari Landry "
-                  "\nMatthew Duffy",
+              "Thank you to Daniel Donze and LSU for providing the class."
+              "\n\nContributors:"
+                  "\n\tCardin Tran "
+                  "\n\tJimmy Rubio-Gonzalez "
+                  "\n\tHoa Ho "
+                  "\n\tEmari Landry "
+                  "\n\tMatthew Duffy",
               style: TextStyle(fontSize: 16, height: 1.5),
             ),
           ],

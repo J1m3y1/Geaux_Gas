@@ -5,6 +5,7 @@ class GasStation {
   final double longitude;
   final double price;
   final String address;
+  final String deals;
 
   GasStation({
     required this.id,
@@ -13,6 +14,7 @@ class GasStation {
     required this.longitude,
     required this.price,
     required this.address,
+    required this.deals,
   });
 factory GasStation.fromFirestore(Map<String, dynamic> data, String documentId) {
   return GasStation(
@@ -21,7 +23,8 @@ factory GasStation.fromFirestore(Map<String, dynamic> data, String documentId) {
     latitude: (data['latitude'] ?? 0).toDouble(),
     longitude: (data['longitude'] ?? 0).toDouble(),
     price: (data['price'] ?? 0).toDouble(),
-    address: data['address'] ?? 'No address provided'
+    address: data['address'] ?? 'No address provided',
+    deals: data['deals'] ?? ''
   );
 }
 

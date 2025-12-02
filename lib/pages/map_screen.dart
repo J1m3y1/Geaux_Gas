@@ -111,7 +111,7 @@ class _MapScreenState extends State<MapScreen> {
             ),
             const SizedBox(height: 10),
             Text(
-              "Deals: "
+              "Deals: ${station.deals.toString()}",
             ),
           ],
         ),
@@ -133,27 +133,6 @@ class _MapScreenState extends State<MapScreen> {
     setState(() => isMapReady = true);
   }
 
-  void _toggleSheet() {
-    double newSize;
-    final currentSize = sheetController.size;
-
-    if (currentSize <= 0.1) {
-      newSize = 0.5;
-    } else if (currentSize < 0.7) {
-      newSize = 0.8;
-    } else {
-      newSize = 0.05;
-    }
-
-    // Animate to new size
-    if (sheetController.isAttached) {
-      sheetController.animateTo(
-        newSize,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

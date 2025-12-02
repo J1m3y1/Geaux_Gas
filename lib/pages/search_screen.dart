@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gas_app_project_dev/services/auth.dart';
+import 'package:gas_app_project_dev/services/gas_station.dart';
 import 'package:gas_app_project_dev/services/gas_station_services.dart';
 import 'package:gas_app_project_dev/services/gas_filter_tab.dart';
 import 'package:gas_app_project_dev/services/location_service.dart';
@@ -34,6 +35,11 @@ class _SearchScreenState extends State<SearchScreen> {
   String role = 'user';
 
   bool _loadingRole = true;
+
+  GasStation? selectedStation;
+
+  List<Map<String, dynamic>> nearbyStations = [];
+
 
    Map<String,dynamic> _filters = {
               'maxDistance': 25.0,
@@ -85,6 +91,8 @@ class _SearchScreenState extends State<SearchScreen> {
         'address': address,
         'price': price,
         'timestamp': FieldValue.serverTimestamp(),
+        'lat': _userPosition!.latitude,
+        'long': _userPosition!.longitude,
       });
     } catch (e) {
       print('Contribution failed to save');
@@ -93,6 +101,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void openPriceBox({String? placeId, String? currentStation, double? currentPrice}) {
   // Pre-fill controllers when updating
+  selectedStation = null;
   if (placeId != null) {
     stationController.text = currentStation ?? "";
     doubleController.text = currentPrice?.toString() ?? "";
@@ -102,53 +111,80 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text("Update Gas Price"),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Only allow editing station name when adding
-          if (placeId == null)
-            TextField(
-              controller: stationController,
-              decoration: const InputDecoration(labelText: "Station Address"),
-            ),
-          TextField(
-            controller: doubleController,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: InputDecoration(
-              hintText: "Enter Price, e.g., 4.29"
+  context: context,
+  builder: (context) => AlertDialog(
+    title: const Text("Update Gas Price"),
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Only allow editing station name when adding
+        if (placeId == null)
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 300), // limit width inside dialog
+            child: DropdownButtonFormField<GasStation>(
+              isExpanded: true, // ensures the dropdown fills available width
+              decoration: const InputDecoration(
+                labelText: "Select Gas Station",
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
+              value: selectedStation,
+              items: nearbyStations.map((entry) {
+                final station = entry['station'] as GasStation;
+                return DropdownMenuItem<GasStation>(
+                  value: station,
+                  child: Text(
+                    station.address,
+                    overflow: TextOverflow.ellipsis, // truncate long addresses
+                    maxLines: 1,
+                  ),
+                );
+              }).toList(),
+              onChanged: (station) {
+                setState(() {
+                  selectedStation = station;
+                });
+              },
+            ),
           ),
-        ],
-      ),
-      actions: [
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-          const SizedBox(height: 8),
-        ElevatedButton(
-          onPressed: () async {
-            final address = stationController.text.trim();
-            final price = double.tryParse(doubleController.text.trim()) ?? 0.0;
-
-
-                // Update existing station
-                await addContribution(address: address, price: price);
-
-              stationController.clear();
-              doubleController.clear();
-              Navigator.of(context).pop(); 
-          },
-          child: Text("Update"),
-        ),
-          ],
+        const SizedBox(height: 12),
+        TextField(
+          controller: doubleController,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            hintText: "Enter Price, e.g., 4.29",
+          ),
         ),
       ],
     ),
-  );
+    actions: [
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 8),
+          ElevatedButton(
+            onPressed: () async {
+              final address = placeId != null
+                  ? stationController.text
+                  : selectedStation?.address;
+              if (address == null) return;
+              final price = double.tryParse(doubleController.text.trim()) ?? 0.0;
+
+              await addContribution(address: address, price: price);
+
+              selectedStation = null;
+              doubleController.clear();
+              Navigator.of(context).pop();
+            },
+            child: const Text("Update"),
+          ),
+        ],
+      ),
+    ],
+  ),
+);
+
 }
 
 
@@ -275,6 +311,15 @@ class _SearchScreenState extends State<SearchScreen> {
                 return da.compareTo(db);
               });
             }
+
+            nearbyStations = filteredStations.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final station = GasStation.fromFirestore(data, doc.id);
+            return {
+              'station': station,
+              };
+            }).toList();
+
 
             // Display list
             return ListView.builder(

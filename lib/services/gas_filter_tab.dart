@@ -22,8 +22,8 @@ class FilterSheet extends StatefulWidget {
   const FilterSheet({
     required this.onApply,
     required this.currentFilters,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<FilterSheet> createState() => _FilterSheetState();
@@ -144,11 +144,10 @@ class _FilterSheetState extends State<FilterSheet> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                widget.onApply({
+                Navigator.pop(context, {
                   'maxDistance': maxDistance,
                   'sort': sortOption,
                 });
-                Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: isDark ? darkAccent : lightAccent,

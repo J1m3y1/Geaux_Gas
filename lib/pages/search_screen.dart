@@ -161,7 +161,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 child: DropdownButtonFormField<GasStation>(
                   isExpanded: true,
-                  value: selectedStation,
+                  initialValue: selectedStation,
 
                   decoration: InputDecoration(
                     filled: true,
@@ -307,12 +307,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 context: context,
                 builder: (_) => FilterSheet(
                   currentFilters: _filters,
-                  onApply: (newFilters) {
-                    Navigator.of(context).pop(newFilters);
-                  },
+                  onApply: (newFilters) {}, // <-- KEEP EMPTY OR REMOVE
                 ),
               );
-
               if (result != null) {
                 setState(() {
                   _filters = result;

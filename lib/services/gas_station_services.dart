@@ -7,34 +7,13 @@ import 'package:gas_app_project_dev/secrets.dart';
 class GasStationServices {
   final CollectionReference gasstation = FirebaseFirestore.instance.collection("Station_Info");
   String get apiKey => API_KEY;
-
-  // Create: add price to non existing gas station
-  Future<void> addStationFromAPI(Map<String,dynamic> station) async{
-    final docRef = gasstation.doc(station['place_id']);
-
-    return docRef.set({
-      'name': station['name'],
-      'address': station['vicinity'],
-      'latitude': station['geometry']['location']['lat'],
-      'longitude': station['geometry']['location']['lng'],
-      'price': 0.0, // initial price
-      'timestamp': Timestamp.now(), 
-      'deals': '',
-  }, SetOptions(merge: true));
-    }
   
+  //Gets gas information from firebase
   Stream<QuerySnapshot> getGasInfo() {
     return gasstation.snapshots();
   }
-  
-  // Update: update gas price for existing gas station
-  Future<void> updatePrice(String placeId, double newPrice){
-    return gasstation.doc(placeId).update({
-      'price': newPrice,
-      'timestamp': Timestamp.now(),
-    });
-  }
 
+  //Aquires gas stations from firebase located near user location
   Future<List<dynamic>> fetchStations(
     double latitude, double longitude, {int radius = 50000}) async {
       

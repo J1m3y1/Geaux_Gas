@@ -31,6 +31,7 @@ class _LoginPage extends State<LoginPage> {
   final TextEditingController _controllerRePassword = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  //Calls from "auth.dart" to verify and if successful it updates local state to change to main navigation screen
   Future<void> signInWithEmailPassword() async {
     try {
       await Auth().signInWithEmailPassword(
@@ -57,7 +58,7 @@ class _LoginPage extends State<LoginPage> {
       });
     }
   }
-
+  //Calls from "auth.dart" to create a user, saves to firebase, and switches to login view.
   Future<void> createUserWithEmailPassword() async {
     final email = _controllerEmail.text.trim();
     final password = _controllerPassword.text.trim();
@@ -67,6 +68,7 @@ class _LoginPage extends State<LoginPage> {
       setState(() {
         errorMessage = 'Passwords do not match!';
       });
+      return;
     }
 
     try {

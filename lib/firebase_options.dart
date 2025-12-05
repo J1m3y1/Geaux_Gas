@@ -53,7 +53,7 @@ class DefaultFirebaseOptions {
         );
     }
   }
-
+  // Added API KEY for firebase
   static final FirebaseOptions android = FirebaseOptions(
     apiKey: API_KEY,
     appId: '1:576858607271:android:9d86dcdc2292d577ad1582',

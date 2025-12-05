@@ -7,6 +7,7 @@ class Auth {
 
   Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
 
+  //Checks if user exists
   Future<UserCredential> signInWithEmailPassword( {
     required String email,
     required String password
@@ -16,7 +17,7 @@ class Auth {
       password: password
     );
   }
-
+  //Creates a user
   Future<UserCredential> createUserWithEmailPassword( {
     required String email,
     required String password,
@@ -26,7 +27,7 @@ class Auth {
       password: password
     );
   }
-
+  //Signs out
   Future<void> signOut() async {
     await _firebaseAuth.signOut();
   }

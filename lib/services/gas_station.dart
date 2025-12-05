@@ -16,6 +16,8 @@ class GasStation {
     required this.address,
     required this.deals,
   });
+
+  //Creates gas staion template
 factory GasStation.fromFirestore(Map<String, dynamic> data, String documentId) {
   return GasStation(
     id: documentId,

@@ -33,6 +33,7 @@ class _FilterSheetState extends State<FilterSheet> {
   late double maxDistance;
   String sortOption = 'distance_asc';
 
+  //Loads data before UI is built
   @override
   void initState() {
     super.initState();
@@ -172,6 +173,7 @@ class _FilterSheetState extends State<FilterSheet> {
 }
 
 class StationFilter {
+  //Calculates distance of user and gas station using longtitude and latitude
   double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
     const earthRadius = 6371;
 

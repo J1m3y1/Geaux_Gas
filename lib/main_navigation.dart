@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:gas_app_project_dev/pages/map_screen.dart';
 import 'package:gas_app_project_dev/pages/search_screen.dart';
 import 'package:gas_app_project_dev/pages/setting_screen.dart';
-import 'package:gas_app_project_dev/pages/contributor_page.dart';
 import 'package:gas_app_project_dev/pages/rewards_screen.dart';
 import 'package:gas_app_project_dev/services/auth.dart';
 import 'package:gas_app_project_dev/services/globals.dart';
@@ -27,6 +26,7 @@ class _MainNavigationState extends State<MainNavigation> {
     loadRole();
   }
 
+  //Gets user role 
   void loadRole() async {
     final User? user = Auth().currentUser;
 
@@ -51,16 +51,12 @@ class _MainNavigationState extends State<MainNavigation> {
         final screens = [
           MapScreen(isDarkMode: isDarkMode, key: ValueKey(isDarkMode)),
           SearchScreen(isDarkMode: isDarkMode),
-          const SizedBox(),
+          if(role == "contributor") RewardsPage(),
           const SettingsPage(),
         ];
 
         return Scaffold(
-          body: myIndex == 2
-              ? (role == "contributor"
-                    ? const RewardsPage()
-                    : const ContributorPage())
-              : screens[myIndex],
+          body: screens[myIndex],
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: myIndex,
             onTap: (index) {
@@ -68,12 +64,13 @@ class _MainNavigationState extends State<MainNavigation> {
                 myIndex = index;
               });
             },
-            items: const [
+            items: [
               BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),
               BottomNavigationBarItem(
                 icon: Icon(Icons.search),
                 label: 'Search',
               ),
+              if (role == "contributor") // Adds rewards page if role is contributor 
               BottomNavigationBarItem(
                 icon: Icon(Icons.card_giftcard),
                 label: 'Rewards',

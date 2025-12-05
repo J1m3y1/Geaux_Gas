@@ -58,7 +58,7 @@ class _SearchScreenState extends State<SearchScreen> {
     getUserLocation();
     getUserRole();
   }
-
+  //Calls function from "location_service.dart" to get user location
   void getUserLocation() async {
     try {
       final locationSerive = LocationService();
@@ -72,7 +72,7 @@ class _SearchScreenState extends State<SearchScreen> {
       print('Error getting location $e');
     }
   }
-
+  //Calls from firebase to get the user's role
   void getUserRole() async {
     final User? user = Auth().currentUser;
 
@@ -86,7 +86,7 @@ class _SearchScreenState extends State<SearchScreen> {
       _loadingRole = false;
     });
   }
-
+  //If user is a contributor, allows user to post contribution to firebase
   Future<void> addContribution({
     required String address,
     required double price,
@@ -111,7 +111,7 @@ class _SearchScreenState extends State<SearchScreen> {
       print('Contribution failed to save');
     }
   }
-
+  //Opens dialog for contribution
   void openPriceBox({
     String? placeId,
     String? currentStation,

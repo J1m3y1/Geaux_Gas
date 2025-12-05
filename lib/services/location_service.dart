@@ -6,7 +6,8 @@ class LocationService{
     LocationService._internal();
 
     Position? _currentPosition;
-
+    
+    // Function to get the user's current location
     Future<Position> getCurrentLocation() async {
       bool serviceEnabled;
       LocationPermission premission;

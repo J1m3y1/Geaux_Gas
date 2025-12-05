@@ -6,19 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:gas_app_project_dev/services/gas_station_services.dart';
-
-const lightBackground = Color(0xFFF3FFF7);
-const lightCard = Color(0xFFE6FFF0);
-const lightBorder = Color(0xFFB7F5D4);
-const lightText = Color(0xFF2F855A);
-const lightAccent = Color(0xFF68D391);
-
-const darkBackground = Color(0xFF121212);
-const darkCard = Color(0xFF1E1E1E);
-const darkBorder = Color(0xFF2A2A2A);
-const darkTextPrimary = Color(0xFFE0E0E0);
-const darkTextSecondary = Color(0xFFA0A0A0);
-const darkAccent = Color(0xFF34D399);
+import 'package:gas_app_project_dev/assets/app_colors.dart';
 
 class MapScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -96,6 +84,7 @@ class _MapScreenState extends State<MapScreen> {
     mapController?.setMapStyle(mapStyle);
   }
 
+  // converts the gas station list in google map markers
   void _createMarkers() {
     markers = gasStations.map((station) {
       return Marker(
@@ -111,20 +100,22 @@ class _MapScreenState extends State<MapScreen> {
     if (mounted) setState(() {});
   }
 
+  // shows the pop up dialog when a station marker is selected
   void _showStationPopup(GasStation station) {
     final isDark = isDarkModeNotifier.value;
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: isDark ? darkCard : lightCard,
+          backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
             side: BorderSide(
-              color: isDark ? darkBorder : lightBorder,
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
               width: 2,
             ),
           ),
+          // station name
           title: Text(station.name),
           content: SizedBox(
             height: 100,
@@ -154,6 +145,7 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
+  // triggers when google map widget finishes loading to prevent crashing
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
     _setMapStyle();
@@ -195,6 +187,7 @@ class _MapScreenState extends State<MapScreen> {
               maxChildSize: 0.8,
               snap: true,
               snapSizes: const [0.12, 0.5, 0.8],
+              // main sheet builder
               builder: (context, scrollController) {
                 return StreamBuilder(
                   stream: firestoreService.getGasInfo(),
@@ -202,6 +195,7 @@ class _MapScreenState extends State<MapScreen> {
                     if (!snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
                     }
+                    // converts the stations from firestore into objects
                     final stationList = snapshot.data!.docs
                         .map(
                           (doc) => GasStation.fromFirestore(
@@ -210,6 +204,7 @@ class _MapScreenState extends State<MapScreen> {
                           ),
                         )
                         .toList();
+                    // determines the distance of the stations from the user
                     final nearbyStations = stationList
                         .map((station) {
                           final distance =
@@ -224,16 +219,18 @@ class _MapScreenState extends State<MapScreen> {
                         })
                         .where((entry) => (entry['distance'] as double) <= 25)
                         .toList();
-
+                    // sorts by the nearest
                     nearbyStations.sort(
                       (a, b) => (a['distance'] as double).compareTo(
                         b['distance'] as double,
                       ),
                     );
-
+                    // bottom sheet ui
                     return Container(
                       decoration: BoxDecoration(
-                        color: isDark ? darkCard : lightCard,
+                        color: isDark
+                            ? AppColors.darkCard
+                            : AppColors.lightCard,
                         borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(20),
                           topRight: Radius.circular(20),
@@ -248,10 +245,10 @@ class _MapScreenState extends State<MapScreen> {
                       ),
                       child: Column(
                         children: [
-                          // Draggable header area
+                          // draggable header area
                           GestureDetector(
                             onVerticalDragUpdate: (details) {
-                              // Manual drag handling
+                              // manual drag handling
                               if (sheetController.isAttached) {
                                 final currentSize = sheetController.size;
                                 final delta =
@@ -298,7 +295,9 @@ class _MapScreenState extends State<MapScreen> {
                                     width: 40,
                                     height: 4,
                                     decoration: BoxDecoration(
-                                      color: isDark ? darkBorder : lightBorder,
+                                      color: isDark
+                                          ? AppColors.darkBorder
+                                          : AppColors.lightBorder,
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                   ),
@@ -327,8 +326,9 @@ class _MapScreenState extends State<MapScreen> {
                                                       fontWeight:
                                                           FontWeight.bold,
                                                       color: isDark
-                                                          ? darkTextPrimary
-                                                          : lightText,
+                                                          ? AppColors
+                                                                .darkTextPrimary
+                                                          : AppColors.lightText,
                                                     ),
                                               ),
                                               Text(
@@ -338,7 +338,8 @@ class _MapScreenState extends State<MapScreen> {
                                                     .bodyMedium
                                                     ?.copyWith(
                                                       color: isDark
-                                                          ? darkTextSecondary
+                                                          ? AppColors
+                                                                .darkTextSecondary
                                                           : Colors.grey[600],
                                                     ),
                                               ),
@@ -409,6 +410,7 @@ class _MapScreenState extends State<MapScreen> {
   }
 }
 
+// gas station cards
 class GasStationCard extends StatelessWidget {
   final GasStation station;
   final double distance;
@@ -430,7 +432,7 @@ class GasStationCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isDark ? darkBorder : lightBorder,
+            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
             width: 2,
           ),
         ),
@@ -442,7 +444,7 @@ class GasStationCard extends StatelessWidget {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: isDark ? darkBorder : lightBorder,
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
@@ -459,6 +461,7 @@ class GasStationCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // station name and distance badge
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -471,20 +474,25 @@ class GasStationCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                      // distance ui
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: isDark ? darkCard : lightBackground,
+                          color: isDark
+                              ? AppColors.darkCard
+                              : AppColors.lightBackground,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           '${distance.toStringAsFixed(1)} mi',
                           style: TextStyle(
                             fontSize: 12,
-                            color: isDark ? darkAccent : lightAccent,
+                            color: isDark
+                                ? AppColors.darkAccent
+                                : AppColors.lightAccent,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -494,11 +502,14 @@ class GasStationCard extends StatelessWidget {
 
                   const SizedBox(height: 4),
 
+                  // station address
                   Text(
                     station.address,
                     style: TextStyle(
                       fontSize: 13,
-                      color: isDark ? darkTextSecondary : Colors.grey[600],
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : Colors.grey[600],
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -506,11 +517,14 @@ class GasStationCard extends StatelessWidget {
 
                   const SizedBox(height: 8),
 
+                  // station price
                   Text(
                     '\$${station.price.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontSize: 13,
-                      color: isDark ? darkTextSecondary : Colors.grey[600],
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : Colors.grey[600],
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

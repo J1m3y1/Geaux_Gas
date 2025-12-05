@@ -1,0 +1,540 @@
+import 'package:flutter/material.dart';
+import 'package:gas_app_project_dev/services/gas_station.dart';
+import 'package:gas_app_project_dev/services/globals.dart';
+import 'package:gas_app_project_dev/services/location_service.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:gas_app_project_dev/services/gas_station_services.dart';
+import 'package:gas_app_project_dev/assets/app_colors.dart';
+
+class MapScreen extends StatefulWidget {
+  final bool isDarkMode;
+  const MapScreen({super.key, required this.isDarkMode});
+
+  @override
+  State<MapScreen> createState() => _MapScreenState();
+}
+
+class _MapScreenState extends State<MapScreen> {
+  GoogleMapController? mapController;
+  Position? _userPosition;
+  bool isMapReady = false;
+  List<GasStation> gasStations = [];
+  Set<Marker> markers = {};
+
+  final DraggableScrollableController sheetController =
+      DraggableScrollableController();
+  final GasStationServices firestoreService = GasStationServices();
+  @override
+  void initState() {
+    super.initState();
+    getUserLocation();
+    _fetchGasStations();
+
+    isDarkModeNotifier.addListener(_updateMapStyle);
+  }
+
+  void _updateMapStyle() {
+    if (mapController != null && mounted) {
+      _setMapStyle();
+      setState(() {}); // refresh sheet colors
+    }
+  }
+
+  Future<void> _fetchGasStations() async {
+    try {
+      final snapshot = await firestoreService.getGasInfo().first;
+      final stations = snapshot.docs
+          .map(
+            (doc) => GasStation.fromFirestore(
+              doc.data() as Map<String, dynamic>,
+              doc.id,
+            ),
+          )
+          .toList();
+
+      setState(() {
+        gasStations = stations;
+        _createMarkers(); // create markers for the map
+      });
+    } catch (e) {
+      print("Error fetching gas stations: $e");
+    }
+  }
+
+  Future<void> getUserLocation() async {
+    try {
+      final locationService = LocationService();
+      final pos = await locationService.getCurrentLocation();
+
+      setState(() {
+        _userPosition = pos;
+      });
+      // ignore: empty_catches
+    } catch (e) {}
+  }
+
+  Future<void> _setMapStyle() async {
+    final isDark = isDarkModeNotifier.value;
+    String stylePath = isDark
+        ? 'assets/map_styles/dark_map.json'
+        : 'assets/map_styles/light_map.json';
+    final String mapStyle = await rootBundle.loadString(stylePath);
+    mapController?.setMapStyle(mapStyle);
+  }
+
+  // converts the gas station list in google map markers
+  void _createMarkers() {
+    markers = gasStations.map((station) {
+      return Marker(
+        markerId: MarkerId(station.id),
+        position: LatLng(station.latitude, station.longitude),
+        onTap: () {
+          _showStationPopup(station);
+        },
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
+      );
+    }).toSet();
+
+    if (mounted) setState(() {});
+  }
+
+  // shows the pop up dialog when a station marker is selected
+  void _showStationPopup(GasStation station) {
+    final isDark = isDarkModeNotifier.value;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              width: 2,
+            ),
+          ),
+          // station name
+          title: Text(station.name),
+          content: SizedBox(
+            height: 100,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(station.address),
+                const SizedBox(height: 10),
+                Text(
+                  "Price: \$${station.price.toStringAsFixed(2)}",
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Text("Deals: ${station.deals.toString()}"),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // triggers when google map widget finishes loading to prevent crashing
+  void _onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+    _setMapStyle();
+    setState(() => isMapReady = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = isDarkModeNotifier.value;
+    if (_userPosition == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final LatLng center = LatLng(
+      _userPosition!.latitude,
+      _userPosition!.longitude,
+    );
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          // Google Map
+          GoogleMap(
+            onMapCreated: _onMapCreated,
+            initialCameraPosition: CameraPosition(target: center, zoom: 14.0),
+            markers: markers,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: true,
+            // Add padding to bottom so controls don't overlap with sheet
+            padding: const EdgeInsets.only(bottom: 100),
+          ),
+
+          // Draggable Bottom Sheet
+          if (isMapReady)
+            DraggableScrollableSheet(
+              controller: sheetController,
+              initialChildSize: 0.12,
+              minChildSize: 0.12,
+              maxChildSize: 0.8,
+              snap: true,
+              snapSizes: const [0.12, 0.5, 0.8],
+              // main sheet builder
+              builder: (context, scrollController) {
+                return StreamBuilder(
+                  stream: firestoreService.getGasInfo(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    // converts the stations from firestore into objects
+                    final stationList = snapshot.data!.docs
+                        .map(
+                          (doc) => GasStation.fromFirestore(
+                            doc.data() as Map<String, dynamic>,
+                            doc.id,
+                          ),
+                        )
+                        .toList();
+                    // determines the distance of the stations from the user
+                    final nearbyStations = stationList
+                        .map((station) {
+                          final distance =
+                              Geolocator.distanceBetween(
+                                _userPosition!.latitude,
+                                _userPosition!.longitude,
+                                station.latitude,
+                                station.longitude,
+                              ) *
+                              0.000621371;
+                          return {'station': station, 'distance': distance};
+                        })
+                        .where((entry) => (entry['distance'] as double) <= 25)
+                        .toList();
+                    // sorts by the nearest
+                    nearbyStations.sort(
+                      (a, b) => (a['distance'] as double).compareTo(
+                        b['distance'] as double,
+                      ),
+                    );
+                    // bottom sheet ui
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? AppColors.darkCard
+                            : AppColors.lightCard,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20),
+                        ),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 10,
+                            offset: Offset(0, -2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          // draggable header area
+                          GestureDetector(
+                            onVerticalDragUpdate: (details) {
+                              // manual drag handling
+                              if (sheetController.isAttached) {
+                                final currentSize = sheetController.size;
+                                final delta =
+                                    details.primaryDelta! /
+                                    MediaQuery.of(context).size.height;
+                                final newSize = (currentSize - delta).clamp(
+                                  0.05,
+                                  0.8,
+                                );
+                                sheetController.jumpTo(newSize);
+                              }
+                            },
+                            onVerticalDragEnd: (details) {
+                              // Snap to nearest size
+                              if (sheetController.isAttached) {
+                                final currentSize = sheetController.size;
+                                double snapTo;
+
+                                if (currentSize < 0.25) {
+                                  snapTo = 0.05;
+                                } else if (currentSize < 0.65) {
+                                  snapTo = 0.5;
+                                } else {
+                                  snapTo = 0.8;
+                                }
+
+                                sheetController.animateTo(
+                                  snapTo,
+                                  duration: const Duration(milliseconds: 200),
+                                  curve: Curves.easeOut,
+                                );
+                              }
+                            },
+                            child: Container(
+                              color: Colors.transparent,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Drag handle bar
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
+                                    width: 40,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? AppColors.darkBorder
+                                          : AppColors.lightBorder,
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
+
+                                  // Header with expand/collapse buttons
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Nearby Gas Stations',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleLarge
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: isDark
+                                                          ? AppColors
+                                                                .darkTextPrimary
+                                                          : AppColors.lightText,
+                                                    ),
+                                              ),
+                                              Text(
+                                                '${nearbyStations.length} stations',
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      color: isDark
+                                                          ? AppColors
+                                                                .darkTextSecondary
+                                                          : Colors.grey[600],
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  const Divider(height: 1),
+                                ],
+                              ),
+                            ),
+                          ),
+
+                          // Gas Stations List
+                          Expanded(
+                            child: ListView.builder(
+                              controller: scrollController,
+                              itemCount: nearbyStations.length,
+                              padding: EdgeInsets.zero,
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              itemBuilder: (context, index) {
+                                final station =
+                                    nearbyStations[index]['station']
+                                        as GasStation;
+                                final distance =
+                                    nearbyStations[index]['distance'] as double;
+                                return GasStationCard(
+                                  station: station,
+                                  distance: distance,
+                                  onTap: () {
+                                    // Move map camera to station location
+                                    if (mapController != null) {
+                                      mapController!.animateCamera(
+                                        CameraUpdate.newLatLngZoom(
+                                          LatLng(
+                                            station.latitude,
+                                            station.longitude,
+                                          ),
+                                          16.0,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    mapController?.dispose();
+    sheetController.dispose();
+    super.dispose();
+  }
+}
+
+// gas station cards
+class GasStationCard extends StatelessWidget {
+  final GasStation station;
+  final double distance;
+  final VoidCallback onTap;
+
+  const GasStationCard({
+    super.key,
+    required this.station,
+    required this.distance,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = isDarkModeNotifier.value;
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+            width: 2,
+          ),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Station Icon
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.local_gas_station,
+                color: Colors.blue[700],
+                size: 28,
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            // Station Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // station name and distance badge
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          station.name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      // distance ui
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? AppColors.darkCard
+                              : AppColors.lightBackground,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          '${distance.toStringAsFixed(1)} mi',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark
+                                ? AppColors.darkAccent
+                                : AppColors.lightAccent,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  // station address
+                  Text(
+                    station.address,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : Colors.grey[600],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  // station price
+                  Text(
+                    '\$${station.price.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : Colors.grey[600],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

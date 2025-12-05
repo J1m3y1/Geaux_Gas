@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:gas_app_project_dev/main_navigation.dart';
 import 'package:gas_app_project_dev/services/auth.dart';
+import 'package:gas_app_project_dev/assets/app_colors.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -114,13 +115,13 @@ class _LoginPage extends State<LoginPage> {
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Color(0xFFB7F5D4)),
+          borderSide: BorderSide(color: AppColors.lightBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Color(0xFF68D391), width: 2),
+          borderSide: BorderSide(color: AppColors.lightAccent, width: 2),
         ),
-        labelStyle: TextStyle(color: Color(0xFF2F855A)),
+        labelStyle: TextStyle(color: AppColors.lightText),
       ),
     );
   }
@@ -137,7 +138,7 @@ class _LoginPage extends State<LoginPage> {
             ? signInWithEmailPassword
             : createUserWithEmailPassword,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Color(0xFF68D391),
+          backgroundColor: AppColors.lightAccent,
           foregroundColor: Colors.white,
           padding: EdgeInsets.symmetric(vertical: 14),
           shape: RoundedRectangleBorder(
@@ -161,7 +162,7 @@ class _LoginPage extends State<LoginPage> {
       },
       child: Text(
         isLogin ? 'Register Instead' : 'Login Instead',
-        style: TextStyle(color: Color(0xFF2F855A)),
+        style: TextStyle(color: AppColors.lightText),
       ),
     );
   }
@@ -169,7 +170,7 @@ class _LoginPage extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3FFF7),
+      backgroundColor: AppColors.lightBackground,
       body: Container(
         margin: const EdgeInsets.only(
           right: 32,
@@ -181,9 +182,9 @@ class _LoginPage extends State<LoginPage> {
         height: double.infinity,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: const Color(0xFFE6FFF0),
+          color: AppColors.lightCard,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFB7F5D4), width: 2),
+          border: Border.all(color: AppColors.lightBorder, width: 2),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -191,7 +192,7 @@ class _LoginPage extends State<LoginPage> {
           children: <Widget>[
             Text(
               isLogin ? 'Login' : 'SignUp',
-              style: const TextStyle(fontSize: 32, color: Color(0xFF2F855A)),
+              style: const TextStyle(fontSize: 32, color: AppColors.lightText),
             ),
             const SizedBox(height: 32),
             _entryField('Email', _controllerEmail, isPassword: false),

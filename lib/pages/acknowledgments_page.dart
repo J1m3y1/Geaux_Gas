@@ -1,16 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gas_app_project_dev/services/globals.dart';
-
-const lightBackground = Color(0xFFF3FFF7);
-const lightCard = Color(0xFFE6FFF0);
-const lightBorder = Color(0xFFB7F5D4);
-const lightText = Color(0xFF2F855A);
-
-const darkBackground = Color(0xFF121212);
-const darkCard = Color(0xFF1E1E1E);
-const darkBorder = Color(0xFF2A2A2A);
-const darkTextPrimary = Color(0xFFE0E0E0);
-const darkTextSecondary = Color(0xFFA0A0A0);
+import 'package:gas_app_project_dev/assets/app_colors.dart';
 
 class AcknowledgmentsPage extends StatelessWidget {
   const AcknowledgmentsPage({super.key});
@@ -21,20 +11,22 @@ class AcknowledgmentsPage extends StatelessWidget {
       valueListenable: isDarkModeNotifier,
       builder: (context, isDark, _) {
         return Scaffold(
-          backgroundColor: isDark ? darkBackground : lightBackground,
+          backgroundColor: isDark
+              ? AppColors.darkBackground
+              : AppColors.lightBackground,
 
           appBar: AppBar(
-            backgroundColor: isDark ? darkCard : lightCard,
+            backgroundColor: isDark ? AppColors.darkCard : AppColors.lightCard,
             elevation: 1,
             title: Text(
               'Acknowledgments',
               style: TextStyle(
-                color: isDark ? darkTextPrimary : lightText,
+                color: isDark ? AppColors.darkTextPrimary : AppColors.lightText,
                 fontWeight: FontWeight.bold,
               ),
             ),
             iconTheme: IconThemeData(
-              color: isDark ? darkTextPrimary : lightText,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.lightText,
             ),
           ),
 
@@ -43,10 +35,10 @@ class AcknowledgmentsPage extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: isDark ? darkCard : lightCard,
+                color: isDark ? AppColors.darkCard : AppColors.lightCard,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: isDark ? darkBorder : lightBorder,
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
                   width: 2,
                 ),
               ),
@@ -59,7 +51,9 @@ class AcknowledgmentsPage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 23,
                       fontWeight: FontWeight.bold,
-                      color: isDark ? darkTextPrimary : lightText,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : AppColors.lightText,
                     ),
                   ),
 
@@ -69,7 +63,9 @@ class AcknowledgmentsPage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       height: 1.4,
-                      color: isDark ? darkTextSecondary : Colors.black87,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : Colors.black87,
                     ),
                   ),
 
@@ -85,7 +81,9 @@ class AcknowledgmentsPage extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       height: 1.5,
-                      color: isDark ? darkTextPrimary : Colors.black87,
+                      color: isDark
+                          ? AppColors.darkTextPrimary
+                          : Colors.black87,
                     ),
                   ),
                 ],
